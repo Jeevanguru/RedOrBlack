@@ -1,159 +1,154 @@
-# 🎴 Red or Black – Real-Time Card Game (Socket.io + Redis + RabbitMQ)
+# 🎴 Red or Black – Real-Time Card Game
 
-A real-time multiplayer **Red or Black card game** where players predict whether the next card drawn will be **Red** or **Black**.
+A high-performance, real-time multiplayer **Red or Black** card game. Players predict whether the next card drawn will be **Red** or **Black** in an infinite lobby system.
 
-This project demonstrates real-time backend development using **Socket.io**, caching/state management using **Redis**, asynchronous processing using **RabbitMQ**, and persistent storage using **MySQL**.  
-It also includes a separate **Admin/Wallet Service** for user validation and credit/debit operations.
+This project showcases a robust distributed architecture using **Socket.io** for real-time communication, **Redis** for state management, **RabbitMQ** for asynchronous event processing, and **MySQL** for persistent storage.
 
 ---
 
 ## 🚀 Live Deployment
 
-- **Admin Service (Wallet API):** https://red-black-admin-service.onrender.com  
-- **Game Service (Socket.io Server):** https://red-black-game-service.onrender.com/
-
----
-
-## 📌 Project Structure
-
-```bash
-red-or-black-game/
-│
-├── admin-service/         # User validation + credit/debit APIs
-├── game-service/          # Real-time Socket.io game engine
-└── README.md
-````
+* **Admin Service (Wallet API):** [https://red-black-admin-service.onrender.com](https://red-black-admin-service.onrender.com)
+* **Game Service (Socket.io Server):** [https://red-black-game-service.onrender.com/](https://red-black-game-service.onrender.com/)
 
 ---
 
 ## ⚙️ Tech Stack
 
-* Node.js + TypeScript
-* Express.js
-* Socket.io
-* Redis
-* RabbitMQ
-* MySQL
-* Docker (local development)
-* Render (deployment)
+| Category | Technology |
+| --- | --- |
+| **Runtime & Language** | Node.js + TypeScript |
+| **Real-Time Engine** | Socket.io |
+| **Caching & State** | Redis |
+| **Message Broker** | RabbitMQ |
+| **Database** | MySQL |
+| **Infrastructure** | Docker, Render, Upstash, CloudAMQP |
 
 ---
 
-## 🧩 Services
+## 🧩 System Architecture
 
-### 1) Admin Service (User / Wallet Service)
+### 1. Admin Service (Wallet & Auth)
 
-Handles:
+Responsible for user management and financial integrity.
 
-* user validation via token
-* user details API
-* credit / debit operations
+* **User Validation:** Verifies players via secure tokens.
+* **Wallet Operations:** Handles atomic credit/debit transactions.
+* **API:** RESTful endpoints for user metadata.
 
-Folder: `admin-service`
+### 2. Game Service (The Engine)
 
----
+The core real-time loop managing gameplay logic.
 
-### 2) Game Service (Real-Time Engine)
-
-Handles:
-
-* socket connections
-* infinite lobby game rounds
-* game logic (Red / Black prediction)
-* card outcome generation
-* credit/debit integration (Admin Service API)
-* Redis state management
-* RabbitMQ event publishing
-* MySQL storage for game/round records
-
-Folder: `game-service`
+* **Socket Management:** Handles concurrent player connections.
+* **Game Logic:** Automated infinite rounds, card generation, and outcome calculation.
+* **Event-Driven:** Uses RabbitMQ to decouple game results from database writes.
+* **Stateful:** Uses Redis for millisecond-latency access to active round data.
 
 ---
 
 ## 🎮 Game Flow
 
-1. Player connects to the Socket.io game server
-2. Game server validates the player using Admin Service
-3. Player selects Red/Black for the current round
-4. Round timer ends and server generates the next card color
-5. Server evaluates player selections and updates balance (credit/debit)
-6. Results are broadcast to all players in real-time
-7. Next round starts automatically (infinite lobby)
+1. **Authentication:** Player connects to the Socket.io server with a valid token.
+2. **Lobby Join:** Server validates the player via the Admin Service and adds them to the active game.
+3. **Prediction:** Player selects **Red** or **Black** before the round timer expires.
+4. **Draw:** The server generates a random card; outcomes are evaluated instantly.
+5. **Settlement:** Balances are updated via the Wallet API.
+6. **Broadcast:** Results are pushed to all connected clients.
+7. **Reset:** A new round begins automatically.
 
 ---
 
 ## 🏃 Local Setup
 
-### 1) Clone Repository
+### 1. Clone & Install
 
 ```bash
 git clone https://github.com/Jeevanguru/RedOrBlack
 cd red-or-black-game
+
+# Install dependencies for both services
+cd admin-service && npm install
+cd ../game-service && npm install
+
 ```
 
----
+### 2. Infrastructure (Docker)
 
-### 2) Start Redis & RabbitMQ using Docker
+Ensure Redis and RabbitMQ are running locally:
 
 ```bash
+# Start Redis
 docker run -d --name redis -p 6379:6379 redis
+
+# Start RabbitMQ with Management UI
 docker run -d --name rabbitmq -p 5672:5672 -p 15672:15672 rabbitmq:3-management
-```
-
-RabbitMQ Dashboard:
 
 ```
-http://localhost:15672
-username: guest
-password: guest
-```
 
----
+> **RabbitMQ UI:** http://localhost:15672 (guest/guest)
 
-### 3) Run Admin Service
+### 3. Start Services
+
+Open two terminal windows:
 
 ```bash
-cd admin-service
-npm install
-npm start
-```
+# Window 1: Admin Service
+cd admin-service && npm start
 
-Runs at:
+# Window 2: Game Service
+cd game-service && npm start
 
-```
-http://localhost:5800
 ```
 
 ---
 
-### 4) Run Game Service
+## 🔌 Socket.IO Client Implementation
 
-```bash
-cd ../game-service
-npm install
-npm start
-```
+To test the connection, use the following configuration in your frontend or a test script:
 
-Runs at:
+```javascript
+import { io } from "socket.io-client";
 
-```
-http://localhost:4000
+const socket = io("https://red-black-game-service.onrender.com", {
+  transports: ["websocket"],
+  auth: {
+    token: "22202607092003", // Sample Test Token
+    game_id: "11",           // Sample Game ID
+  },
+});
+
+socket.on("connect", () => {
+  console.log("✅ Connected to Game Server:", socket.id);
+});
+
+socket.on("round_start", (data) => {
+  console.log("🎲 Round Started:", data);
+});
+
+socket.on("round_end", (result) => {
+  console.log("🏁 Result:", result);
+});
+
+socket.on("connect_error", (err) => {
+  console.error("❌ Connection Failed:", err.message);
+});
+
 ```
 
 ---
 
-## 📌 Deployment Notes
+## 📌 Project Notes
 
-This project is deployed using:
-
-* **Render** for Node.js backend hosting
-* **Upstash Redis** (cloud Redis)
-* **CloudAMQP** (RabbitMQ hosting)
-* **MySQL Aiven Cloud Provider** (MySql Management)
+* **Database:** Hosted on Aiven (MySQL).
+* **Messaging:** CloudAMQP handles the asynchronous message queue.
+* **Cache:** Upstash Redis manages the real-time lobby state.
+* **Error Handling:** The server will forcefully disconnect any socket missing required `auth` parameters (`token` and `game_id`).
 
 ---
 
 ## 👨‍💻 Author
 
 **Jeevan (solve)**
-Backend Developer | Real-Time Multiplayer Systems
+*Backend Developer | Specialized in Real-Time Multiplayer Systems*
+---
