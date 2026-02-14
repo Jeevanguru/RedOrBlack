@@ -46,6 +46,9 @@ const games = {
     gameName: "real time game engine",
   }
 };
+app.get("/", (req, res) => {
+  res.send("Admin service running successfully 🚀");
+});
 
 // -------------------- USER DETAIL API --------------------
 app.get("/service/user/detail", (req, res) => {
@@ -166,4 +169,5 @@ const PORT = process.env.PORT || 5800;
 app.listen(PORT, () => {
   console.log(`Admin service running on port ${PORT}`);
 });
+
 
