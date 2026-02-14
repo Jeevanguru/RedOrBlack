@@ -4,8 +4,8 @@
   "description": "Backend of Red Or Black Game",
   "main": "index.js",
   "scripts": {
-    "start": "tsc & node dist/index.js",
     "build": "tsc",
+    "start": "node dist/index.js",
     "dev": "nodemon --watch src --exec ts-node src/index.ts"
   },
   "keywords": [],
