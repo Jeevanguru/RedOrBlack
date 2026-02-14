@@ -21,24 +21,23 @@ function requireNumberEnv(name: string): number {
 }
 
 export const appConfig: AppConfig = {
-    minBetAmount: requireNumberEnv("MIN_BET_AMOUNT"),
-    maxBetAmount: requireNumberEnv("MAX_BET_AMOUNT"),
-    maxCashoutAmount: requireNumberEnv("MAX_CASHOUT"),
+  minBetAmount: requireNumberEnv("MIN_BET_AMOUNT"),
+  maxBetAmount: requireNumberEnv("MAX_BET_AMOUNT"),
+  maxCashoutAmount: requireNumberEnv("MAX_CASHOUT"),
 
-    dbConfig: {
-        host: requireEnv("DB_HOST"),
-        user: requireEnv("DB_USER"),
-        password: requireEnv("DB_PASSWORD"),
-        database: requireEnv("DB_NAME"),
-        port: requireEnv("DB_PORT"),
-        retries: requireEnv("DB_MAX_RETRIES"),
-        interval: requireEnv("DB_RETRY_INTERVAL"),
-    },
-    
-    redis: {
-        host: requireEnv("REDIS_HOST"),
-        port: requireNumberEnv("REDIS_PORT"),
-        retry: requireNumberEnv("REDIS_RETRY"),
-        interval: requireNumberEnv("REDIS_RETRY_INTERVAL"),
-    },
+  dbConfig: {
+    host: requireEnv("DB_HOST"),
+    user: requireEnv("DB_USER"),
+    password: requireEnv("DB_PASSWORD"),
+    database: requireEnv("DB_NAME"),
+    port: requireEnv("DB_PORT"),
+    retries: requireEnv("DB_MAX_RETRIES"),
+    interval: requireEnv("DB_RETRY_INTERVAL"),
+  },
+
+  redis: {
+    url: requireEnv("REDIS_URL"),
+    retry: requireNumberEnv("REDIS_RETRY"),
+    interval: requireNumberEnv("REDIS_RETRY_INTERVAL"),
+  },
 };
