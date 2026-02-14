@@ -24,7 +24,12 @@ const startServer = async() => {
         
         const app = express();
         const server = createServer(app);
-        const io = new SocketIOServer(server);
+        const io = new SocketIOServer(server, {
+            cors: {
+                origin: "*",
+                methods: ["GET", "POST"]
+              }
+            );
         
         app.use(cors());
         
@@ -41,6 +46,7 @@ const startServer = async() => {
         process.exit(1);
     }
 };
+
 
 
 startServer();
