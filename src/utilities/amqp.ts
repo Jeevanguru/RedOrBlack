@@ -1,0 +1,113 @@
+import amqp, { Channel, Options } from "amqplib";
+import { createLogger } from "./logger.js";
+
+const rabbitMQLogger = createLogger("Queue");
+
+let pubChannel: Channel | null = null;
+let subChannel: Channel | null = null;
+let connected = false;
+
+const AMQP_CONNECTION_STRING = process.env.AMQP_CONNECTION_STRING;
+const AMQP_EXCHANGE_NAME = process.env.AMQP_EXCHANGE_NAME;
+
+if (!AMQP_CONNECTION_STRING || !AMQP_EXCHANGE_NAME) {
+    throw new Error("Environment variables AMQP_CONNECTION_STRING or AMQP_EXCHANGE_NAME are not set.");
+}
+
+const exchange = AMQP_EXCHANGE_NAME;
+
+export const connect = async (): Promise<void> => {
+    if (connected && pubChannel && subChannel) return;
+
+    try {
+        rabbitMQLogger.info(`⌛️ Connecting to Rabbit-MQ Server ${AMQP_CONNECTION_STRING.split("@")[1]}`);
+
+        const connection = await amqp.connect(AMQP_CONNECTION_STRING);
+
+        rabbitMQLogger.info('✅ Rabbit MQ Connection is ready');
+
+        [pubChannel, subChannel] = await Promise.all([
+            connection.createChannel(),
+            connection.createChannel(),
+        ]);
+
+        await pubChannel.assertExchange(exchange, "direct", {
+            durable: true,
+        });
+
+
+        pubChannel.removeAllListeners("close");
+        pubChannel.removeAllListeners("error");
+        subChannel.removeAllListeners("close");
+        subChannel.removeAllListeners("error");
+
+        pubChannel.on("close", async () => {
+            console.error("pubChannel Closed");
+            pubChannel = null;
+            connected = false;
+        });
+
+        subChannel.on("close", async () => {
+            console.error("subChannel Closed");
+            subChannel = null;
+            connected = false;
+            setTimeout(() => initQueue(), 1000);
+        });
+
+        pubChannel.on("error", async (msg: unknown) => {
+            console.error("pubChannel Error", msg);
+        });
+
+        subChannel.on("error", async (msg: unknown) => {
+            console.error("subChannel Error", msg);
+        });
+
+        rabbitMQLogger.info("🛸 Created RabbitMQ Channel successfully");
+        connected = true;
+
+    } catch (err: any) {
+        rabbitMQLogger.error(err);
+        rabbitMQLogger.error('Not Connected to MQ Server');
+    }
+
+};
+
+const initQueue = async (): Promise<void> => {
+    await connect();
+};
+
+//sendToQueue is called when the CREDIT is made for placed bet from webHookData
+// await sendToQueue('', 'games_cashout', JSON.stringify({ ...webhookData, operatorId: playerDetails.operatorId, token: playerDetails.token }));
+export const sendToQueue = async (
+    ex: string,
+    queueName: string,
+    message: string,
+    delay: number = 0,
+    retries: number = 0
+): Promise<void> => {
+    try {
+        if (!pubChannel || (pubChannel as any).connection?._closing) {
+            await connect();
+        }
+
+        if (!pubChannel) throw new Error("Publishing channel not initialized");
+
+        await pubChannel.assertQueue(queueName, { durable: true });
+        await pubChannel.bindQueue(queueName, exchange, queueName);
+
+        pubChannel.publish(
+            exchange,
+            queueName,
+            Buffer.from(message),
+            {
+                persistent: true,
+            } as Options.Publish
+        );
+
+
+        rabbitMQLogger.info(`Message sent to ${queueName} queue on exchange ${exchange} with data ${JSON.stringify(message)}`);
+    } catch (err: any) {
+        rabbitMQLogger.error(`Failed to send message to ${queueName} queue on exchange ${exchange}: ${err.message}`);
+        throw err;
+    }
+}
