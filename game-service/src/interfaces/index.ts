@@ -44,9 +44,9 @@ interface DBConfig {
     user: string;
     database: string;
     password: string;
-    port: string;
-    retries: string;
-    interval: string;
+    port: number;
+    retries: number;
+    interval: number;
 }
 
 interface RedisConfig {
@@ -170,3 +170,4 @@ export interface ProcessedBetResult {
     bet_status: BetStatus;
 
 }
+
