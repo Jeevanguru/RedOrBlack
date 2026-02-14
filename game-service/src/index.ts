@@ -27,8 +27,8 @@ const startServer = async() => {
         const io = new SocketIOServer(server, {
             cors: {
                 origin: "*",
-                methods: ["GET", "POST"]
-              }
+                methods: ["GET", "POST"],
+              },
             );
         
         app.use(cors());
@@ -50,3 +50,4 @@ const startServer = async() => {
 
 
 startServer();
+
