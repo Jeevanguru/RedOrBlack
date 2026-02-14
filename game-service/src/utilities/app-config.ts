@@ -30,9 +30,9 @@ export const appConfig: AppConfig = {
     user: requireEnv("DB_USER"),
     password: requireEnv("DB_PASSWORD"),
     database: requireEnv("DB_NAME"),
-    port: requireEnv("DB_PORT"),
-    retries: requireEnv("DB_MAX_RETRIES"),
-    interval: requireEnv("DB_RETRY_INTERVAL"),
+    port: requireNumberEnv("DB_PORT"),
+    retries: requireNumberEnv("DB_MAX_RETRIES"),
+    interval: requireNumberEnv("DB_RETRY_INTERVAL"),
   },
 
   redis: {
@@ -41,3 +41,4 @@ export const appConfig: AppConfig = {
     interval: requireNumberEnv("REDIS_RETRY_INTERVAL"),
   },
 };
+
