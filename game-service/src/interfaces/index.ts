@@ -50,8 +50,7 @@ interface DBConfig {
 }
 
 interface RedisConfig {
-    host: string;
-    port: number;
+    url: string;
     retry: number;
     interval: number;
 }
@@ -169,4 +168,5 @@ export interface ProcessedBetResult {
     multiplier: number;
     winAmount: number;
     bet_status: BetStatus;
+
 }
