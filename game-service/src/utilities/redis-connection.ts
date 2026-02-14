@@ -8,38 +8,35 @@ import { createLogger } from "./logger.js";
 
 const logger = createLogger('Redis');
 
-const {
-    host = '127.0.0.1', 
-    port = 6379,
-    retry,
-    interval,
-} = appConfig.redis;
+const { url, retry, interval } = appConfig.redis;
 
 const redisConfig: RedisOptions = {
-    host,
-    port,
-    password: process.env.REDIS_PASSWORD || undefined,
+  lazyConnect: true,
+  tls: {}, // important for Upstash
 };
-
 let redisClient: RedisClient | null = null;
 
 const createRedisClient = (): RedisClient => {
-    const client = new Redis(redisConfig);
+  const client = new Redis(url, {
+    lazyConnect: true,
+    tls: {},
+  });
 
-    client.on('error', (err: Error) => {
-        logger.error(`REDIS ERROR: ${err.message}`);
-    });
+  client.on("error", (err: Error) => {
+    logger.error(`REDIS ERROR: ${err.message}`);
+  });
 
-    client.on('connect', () => {
-        logger.info('REDIS CONNECTION ESTABLISHED');
-    });
+  client.on("connect", () => {
+    logger.info("REDIS CONNECTION ESTABLISHED");
+  });
 
-    client.on('close', () => {
-        logger.info('REDIS CONNECTION CLOSED');
-    });
+  client.on("close", () => {
+    logger.info("REDIS CONNECTION CLOSED");
+  });
 
-    return client;
+  return client;
 };
+
 
 const maxRetries: number = retry;
 const retryInterval: number = interval;
@@ -132,4 +129,5 @@ export const getHashField = async (hash: string, field: string): Promise<string 
     logger.error('Failed to get hash field:', error.message);
     return null;
   }
+
 };
